@@ -1,0 +1,30 @@
+DESCRIPTION="Skype API Plugin for Pidgin"
+HOMEPAGE="http://myjobspace.co.nz/images/pidgin/"
+SVN_URI="http://skype4pidgin.googlecode.com/svn/"
+SVN_REV=${PV}
+
+inherit svn utils
+
+CYGPORT_USE_UNSTABLE_API=1
+src_unpack_hook() {
+	d2u libskype.c skype_messaging{,_win32}.c 2>&1 > /dev/null
+}
+
+src_compile() {
+	local libtool="/usr/bin/libtool --tag=CC --tag=disable-static"
+
+	check_pkg_config PURPLE "purple gthread-2.0"
+
+	lndirs
+	cd ${B}
+	${libtool} --mode=compile \
+		gcc ${CFLAGS} ${PURPLE_CFLAGS} -c -o libskype.lo libskype.c
+	${libtool} --mode=link \
+		gcc ${LDFLAGS} -rpath /usr/lib/purple-2 -module -avoid-version -no-undefined -o libskype.la libskype.lo ${PURPLE_LIBS}
+}
+
+src_install() {
+	cd ${B}
+	exeinto /usr/lib/purple-2
+	doexe libskype.la
+}
